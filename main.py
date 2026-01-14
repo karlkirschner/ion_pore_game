@@ -212,8 +212,10 @@ async def game():
                 else:
                     if ion.rect.left <= 0 or ion.rect.right >= WIDTH:
                         ion.vx *= -1 * pressure_multiplier
+                        ion.vx = max(min(ion.vx, 15), -15)  # cap velocity to avoid inifity
                     if ion.rect.top <= 0:
                         ion.vy *= -1 * pressure_multiplier
+                        ion.vy = max(min(ion.vy, 15), -15)
 
                     if MEMBRANE_Y <= ion.rect.bottom <= MEMBRANE_Y + (MEMBRANE_THICKNESS / 2):
                         is_in_gap = any((p.x - p.current_gap / 2) < ion.rect.centerx < (p.x + p.current_gap / 2) for p in pores)
