@@ -112,7 +112,7 @@ async def game():
     running = True
     while running:
         # --- CRITICAL FOR PYGBAG ---
-        # This await allows the browser to process events without freezing
+        # Enables browser to process events without freezing
         await asyncio.sleep(0)
 
         # --- EVENT HANDLING ---
