@@ -4,11 +4,9 @@ import math
 import random
 
 
-# --- Configuration & Global Helpers ---
 async def game():
     # --- Configuration ---
     WIDTH, HEIGHT = 800, 600
-    ION_SPEED = -5
     PLAYER_SPEED = 7
     FPS = 60
     MEMBRANE_Y = 250
@@ -16,21 +14,25 @@ async def game():
 
     # Colors
     HBRSblue = (0, 158, 224)
-    HBRSgreen = (50, 100, 50)
     HBRSred = (199, 51, 38)
-    HBRSgray = (168, 175, 175)
     HBRSlightgray = (240, 240, 240)
-    BLUE = (0, 32, 229)
-    CYAN = (100, 255, 255)
-    GOLD = (255, 215, 0)
     ORANGE = (255, 165, 0)
     EXTRACELLULAR_BG = HBRSblue
     MEMBRANE_COLOR = ORANGE
     PORE_COLOR = HBRSlightgray
 
+    radius_ratio = 7
+    ION_TYPES = {
+        "sodium":    {"color": (0, 32, 229),    "size": 1.0 * radius_ratio, "speed": -6},
+        "calcium":   {"color": (255, 255, 100), "size": 1.0 * radius_ratio, "speed": -5},
+        "potassium": {"color": (150, 100, 255), "size": 1.4 * radius_ratio, "speed": -4},
+        "chloride":  {"color": (34, 139, 34),   "size": 1.8 * radius_ratio, "speed": -2},
+    }
+
     class Player:
         def __init__(self):
             self.rect = pygame.Rect(WIDTH // 3, HEIGHT - 50, 40, 20)
+            self.current_ion = "sodium"
 
         def move(self, keys):
             if keys[pygame.K_LEFT] and self.rect.left > 0:
@@ -38,23 +40,16 @@ async def game():
             if keys[pygame.K_RIGHT] and self.rect.right < WIDTH:
                 self.rect.x += PLAYER_SPEED
 
-    # Define Ion Properties
-    radius_ratio = 7
-    ION_TYPES = {
-        "sodium": {"color": (0, 32, 229), "size": 1.0 * radius_ratio, "speed": -6},
-        "calcium": {"color": (255, 255, 100), "size": 1.0 * radius_ratio, "speed": -5},
-        "potassium": {"color": (150, 100, 255), "size": 1.4 * radius_ratio, "speed": -4},
-        "chloride": {"color": (34, 139, 34), "size": 1.8 * radius_ratio, "speed": -2},
-    }
-
     class Ion:
         def __init__(self, x, y, ion_type="sodium"):
             properties = ION_TYPES[ion_type]
-            self.size = properties["size"]
+            self.size = int(properties["size"])
             self.rect = pygame.Rect(x - self.size // 2, y, self.size, self.size)
+            self.base_speed = properties["speed"]
             self.vx = 0
-            self.vy = properties["speed"]
+            self.vy = self.base_speed
             self.color = properties["color"]
+            self.type = ion_type
             self.has_passed = False
 
         def update(self):
@@ -78,10 +73,8 @@ async def game():
         font = pygame.font.SysFont("Arial", size, bold=True)
         text_surface = font.render(text, True, color)
         text_rect = text_surface.get_rect()
-        if center:
-            text_rect.center = (x, y)
-        else:
-            text_rect.topleft = (x, y)
+        if center: text_rect.center = (x, y)
+        else: text_rect.topleft = (x, y)
         surface.blit(text_surface, text_rect)
 
     # --- Initialization ---
@@ -93,38 +86,33 @@ async def game():
     player = Player()
     pores = [Pore(200, 0.04), Pore(400, 0.07), Pore(600, 0.03)]
     ions = []
-
-    # --- Counters ---
-    intracellular_count = 0
-    missed_shots = 0
-    leaked_out = 0
-    total_fired = 0
+    intracellular_count, missed_shots, leaked_out, total_fired = 0, 0, 0, 0
     game_state = "MENU"
 
-    # Load Assets (Try/Except for web safety)
+        # Load Assets (Try/Except for web safety)
     try:
         nachr_image = pygame.image.load("complete.png")
         nx, ny = nachr_image.get_size()
         nachr_image = pygame.transform.scale(nachr_image, (nx / 3, ny / 3))
     except:
         nachr_image = None
-
+        
     running = True
     while running:
-        # --- CRITICAL FOR PYGBAG ---
-        # Enables browser to process events without freezing
         await asyncio.sleep(0)
 
-        # --- EVENT HANDLING ---
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+            if event.type == pygame.QUIT: running = False
             if event.type == pygame.KEYDOWN:
-                if game_state == "MENU" and event.key == pygame.K_RETURN:
-                    game_state = "PLAY"
-                elif game_state == "PLAY" and event.key == pygame.K_SPACE:
-                    ions.append(Ion(player.rect.centerx, player.rect.top))
-                    total_fired += 1
+                if game_state == "MENU" and event.key == pygame.K_RETURN: game_state = "PLAY"
+                elif game_state == "PLAY":
+                    if event.key == pygame.K_SPACE:
+                        ions.append(Ion(player.rect.centerx, player.rect.top, player.current_ion))
+                        total_fired += 1
+                    if event.key == pygame.K_1: player.current_ion = "sodium"
+                    if event.key == pygame.K_2: player.current_ion = "potassium"
+                    if event.key == pygame.K_3: player.current_ion = "calcium"
+                    if event.key == pygame.K_4: player.current_ion = "chloride"
 
         if game_state == "MENU":
             screen.fill((10, 10, 25))
@@ -136,6 +124,7 @@ async def game():
             draw_text(screen, "CONTROLS", 24, WIDTH // 2, HEIGHT // 2 + 35, HBRSblue)
             draw_text(screen, "ARROWS: Move Launcher", 18, WIDTH // 2, HEIGHT // 2 + 65)
             draw_text(screen, "SPACE: Launch Ion", 18, WIDTH // 2, HEIGHT // 2 + 90)
+            draw_text(screen, "1, 2, 3 & 4: Ion Types", 18, WIDTH // 2, HEIGHT // 2 + 115)
 
             pulse = (math.sin(pygame.time.get_ticks() * 0.005) + 1) / 2
             start_color = (0, 158, int(224 * pulse))
@@ -143,24 +132,37 @@ async def game():
 
             if nachr_image:
                 screen.blit(nachr_image, (30, 220))
-
+    
         elif game_state == "PLAY":
-            intensity = min(intracellular_count * 5, 150)
-            red_channel = min(200 + intensity, 255)
-            gb_channels = max(200 - intensity, 50)
-            intracellular_bg = (red_channel, gb_channels, gb_channels)
+            # --- SAFE COLOR MATH ---
+            intensity = int(min(intracellular_count * 5, 150))
+            red = int(min(200 + intensity, 255))
+            gb = int(max(200 - intensity, 50))
+            intracellular_bg = (red, gb, gb)
 
             screen.fill(EXTRACELLULAR_BG)
             pygame.draw.rect(screen, intracellular_bg, (0, 0, WIDTH, MEMBRANE_Y + (MEMBRANE_THICKNESS // 2)))
 
             keys = pygame.key.get_pressed()
             player.move(keys)
-            pygame.draw.rect(screen, HBRSred, player.rect)
+
+            # --- StATIC PLAYER COLOR ---
+            # pygame.draw.rect(screen, HBRSred, player.rect)
+
+            # --- DYNAMIC PLAYER COLOR ---
+            # Color of the current ion
+            player_color = ION_TYPES[player.current_ion]["color"]
+            
+            # Draw the player using that specific color instead of HBRSred
+            pygame.draw.rect(screen, player_color, player.rect)
+            
+            # Optional: Add a border so the player is still visible 
+            # if the background color matches the ion color
+            pygame.draw.rect(screen, (255, 255, 255), player.rect, 2)
+
 
             # --- MEMBRANE & PORES ---
-            for p in pores:
-                p.update()
-
+            for p in pores: p.update()
             current_x = 0
             sorted_pores = sorted(pores, key=lambda p: p.x)
             for p in sorted_pores:
@@ -171,80 +173,97 @@ async def game():
             if current_x < WIDTH:
                 pygame.draw.rect(screen, MEMBRANE_COLOR, (current_x, MEMBRANE_Y, WIDTH - current_x, MEMBRANE_THICKNESS))
 
-            # --- PORE LIPS ---
-            lip_y_top = MEMBRANE_Y - 8
-            lip_y_bottom = MEMBRANE_Y + MEMBRANE_THICKNESS + 8
-            lip_w_outer, lip_w_inner = 18, 6
-
+            # --- PROTEIN WEDGES ---
+            lip_y_top, lip_y_bottom = MEMBRANE_Y, MEMBRANE_Y + MEMBRANE_THICKNESS
+            taper_amount = 6
+            # This is how far the protein "back" extends into the orange lipid
+            protein_length = 35
+            protein_width = 15
             for p in pores:
-                gl, gr = p.x - p.current_gap / 2, p.x + p.current_gap / 2
-                pygame.draw.polygon(
-                    screen,
-                    PORE_COLOR,
-                    [(gl - lip_w_outer, lip_y_bottom), (gl, lip_y_bottom), (gl, lip_y_top), (gl - lip_w_inner, lip_y_top)],
-                )
-                pygame.draw.polygon(
-                    screen,
-                    PORE_COLOR,
-                    [(gr, lip_y_bottom), (gr + lip_w_outer, lip_y_bottom), (gr + lip_w_inner, lip_y_top), (gr, lip_y_top)],
-                )
+                gl, gr = p.x - p.current_gap/2, p.x + p.current_gap/2
+                pygame.draw.rect(screen, intracellular_bg, (gl, MEMBRANE_Y, p.current_gap, 15))
+                pygame.draw.rect(screen, EXTRACELLULAR_BG, (gl, MEMBRANE_Y, p.current_gap, 15))
+                l_wedge = [(gl, lip_y_bottom),
+                           (gl - protein_width, lip_y_bottom),
+                           (gl - protein_width, lip_y_top),
+                           (gl+taper_amount, lip_y_top)]
+                r_wedge = [(gr, lip_y_bottom),
+                           (gr + protein_width, lip_y_bottom),
+                           (gr + protein_width, lip_y_top),
+                           (gr-taper_amount, lip_y_top)]
+                
+                pygame.draw.polygon(screen, PORE_COLOR, l_wedge)
+                pygame.draw.polygon(screen, PORE_COLOR, r_wedge)
 
-            # --- ION PHYSICS ---
+            # --- PHYSICS ---
             pressure_multiplier = 1.0 + (intracellular_count / 25.0)
 
             for ion in ions[:]:
                 ion.update()
-                pygame.draw.circle(screen, ion.color, ion.rect.center, ion.size)
+                pygame.draw.circle(screen, ion.color, ion.rect.center, ion.size // 2)
 
                 if not ion.has_passed:
-                    if MEMBRANE_Y <= ion.rect.centery <= MEMBRANE_Y + MEMBRANE_THICKNESS:
-                        is_safe = any((p.x - p.current_gap / 2) < ion.rect.centerx < (p.x + p.current_gap / 2) for p in pores)
-                        if not is_safe:
+                    # Collision check at membrane level
+                    if MEMBRANE_Y <= ion.rect.top <= MEMBRANE_Y + MEMBRANE_THICKNESS:
+                        can_pass = False
+                        for p in pores:
+                            # Steric Hindrance check
+                            taper_buffer = 6
+                            effective_gap_left = (p.x - p.current_gap/2) + taper_buffer
+                            effective_gap_right = (p.x + p.current_gap/2) - taper_buffer
+                            
+                            if ion.rect.left > effective_gap_left and ion.rect.right < effective_gap_right:
+                                can_pass = True
+                        
+                        # FIX: Only increment missed_shots if the ion is still moving UP
+                        if not can_pass and ion.vy < 0:
                             missed_shots += 1
-                            ion.vy = abs(ion.vy)
+                            ion.vy = abs(ion.vy) # Change direction to move DOWN
                             ion.vx = random.uniform(-2, 2)
+                            # Nudge it slightly below the membrane so it doesn't re-trigger immediately
                             ion.rect.top = MEMBRANE_Y + MEMBRANE_THICKNESS + 1
                     elif ion.rect.bottom < MEMBRANE_Y:
-                        ion.has_passed = True
-                        intracellular_count += 1
-                        ion.color = (100, 255, 255)
-                        ion.vx, ion.vy = random.uniform(-2, 2), random.uniform(-2, -1)
+                        ion.has_passed, intracellular_count = True, intracellular_count + 1
                 else:
-                    if ion.rect.left <= 0 or ion.rect.right >= WIDTH:
-                        ion.vx *= -1 * pressure_multiplier
-                        ion.vx = max(min(ion.vx, 15), -15)  # Cap velocity to avoid inifity
+                    # --- INTRACELLULAR BOUNCING ---
+                    if ion.rect.left <= 0:
+                        ion.rect.left = 1
+                        ion.vx = abs(ion.base_speed) * pressure_multiplier
+                        ion.vy += random.uniform(-1.5, 1.5)
+                    elif ion.rect.right >= WIDTH:
+                        ion.rect.right = WIDTH - 1
+                        ion.vx = -abs(ion.base_speed) * pressure_multiplier
+                        ion.vy += random.uniform(-1.5, 1.5)
+
                     if ion.rect.top <= 0:
-                        ion.vy *= -1 * pressure_multiplier
-                        ion.vy = max(min(ion.vy, 15), -15)
-
-                    if MEMBRANE_Y <= ion.rect.bottom <= MEMBRANE_Y + (MEMBRANE_THICKNESS / 2):
-                        is_in_gap = any((p.x - p.current_gap / 2) < ion.rect.centerx < (p.x + p.current_gap / 2) for p in pores)
-                        if is_in_gap:
-                            ion.has_passed = False
-                            ion.color = (255, 215, 0)
-                            ion.vx, ion.vy = random.uniform(-1, 1), 5
-                            intracellular_count -= 1
-                            leaked_out += 1
+                        ion.rect.top = 1
+                        ion.vy = abs(ion.base_speed) * pressure_multiplier
+                        ion.vx += random.uniform(-3.5, 3.5)
+                    
+                    # Clamp velocity
+                    max_v = 14
+                    ion.vx = max(-max_v, min(max_v, ion.vx))
+                    ion.vy = max(-max_v, min(max_v, ion.vy))
+                    
+                    if MEMBRANE_Y <= ion.rect.bottom <= MEMBRANE_Y + (MEMBRANE_THICKNESS/2):
+                        leaked = False
+                        for p in pores:
+                            if (p.x - p.current_gap/2) < ion.rect.centerx < (p.x + p.current_gap/2):
+                                if p.current_gap > ion.size: leaked = True
+                        if leaked:
+                            ion.has_passed, leaked_out = False, leaked_out + 1
+                            intracellular_count, ion.vy = intracellular_count - 1, 5
                         else:
-                            ion.vy *= -1
-                            ion.rect.bottom = MEMBRANE_Y - 1
+                            ion.vy, ion.rect.bottom = -abs(ion.vy), MEMBRANE_Y - 1
 
-                if ion.rect.top > HEIGHT:
-                    ions.remove(ion)
+                if ion.rect.top > HEIGHT: ions.remove(ion)
 
             # --- UI ---
-            ui_bg = pygame.Surface((300, 155), pygame.SRCALPHA)
-            ui_bg.fill((30, 30, 30, 150))
-            screen.blit(ui_bg, (10, 10))
-            draw_text(screen, f"Intracellular Count: {intracellular_count}", 18, 20, 20, (100, 255, 255), False)
-            draw_text(screen, f"Blocked (Bounced): {missed_shots}", 18, 20, 45, (255, 100, 100), False)
-            draw_text(screen, f"Efflux (Leaked): {leaked_out}", 18, 20, 70, (255, 200, 100), False)
-            draw_text(screen, f"Total Fired: {total_fired}", 18, 20, 95, (255, 255, 255), False)
-            draw_text(screen, f"Pressure Factor: {pressure_multiplier:.2f}x", 18, 20, 120, (200, 150, 255), False)
-
+            draw_text(screen, f"Intracelular Count: {intracellular_count} | Pressure: {pressure_multiplier:.2f}x | Efflux (Leaked): {leaked_out}", 18, 300, 30, (255, 255, 255))
+            draw_text(screen, f"Blocked: {missed_shots} | Total Fired: {total_fired}", 18, 174, 60, (255, 255, 255))
+            draw_text(screen, f"Ion: {player.current_ion.upper()}", 14, player.rect.centerx, player.rect.bottom + 10, (255, 255, 255))
+            
         pygame.display.flip()
         clock.tick(FPS)
 
-
-# This is the standard entry point for pygbag
 asyncio.run(game())
