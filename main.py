@@ -1,3 +1,4 @@
+cele
 import asyncio
 import pygame
 import math
@@ -275,7 +276,7 @@ async def game():
             # --- UI ---
             draw_text(
                 screen,
-                f"Intracelular Count: {intracellular_count} | Pressure: {pressure_multiplier:.2f}x | Efflux (Leaked): {leaked_out}",
+                f"Intracellular Count: {intracellular_count} | Pressure: {pressure_multiplier:.2f}x | Efflux (Leaked): {leaked_out}",
                 18,
                 300,
                 30,
