@@ -1,4 +1,3 @@
-cele
 import asyncio
 import pygame
 import math

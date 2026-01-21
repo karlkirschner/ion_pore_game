@@ -11,8 +11,8 @@
 \definecolor{MembraneOrange}{RGB}{255, 165, 0}
 \definecolor{PoreGray}{RGB}{240, 240, 240}
 
-\title{CytoTransport Game}
-\author{A Science-Based Ion Transport Simulation Game}
+\title{A Science-Based Ion Transport Simulation Game\\CytoTransport}
+\author{K.N. Kirschner}
 \date{\today}
 
 \begin{document}
@@ -23,8 +23,9 @@
 This game serves as a dynamic model of ion transport across a biological cell membrane. It illustrates how physical barriers and protein pore structures regulate the internal environment of a cell. The environement is split into three distinct regions:
 \begin{itemize}
     \item \textbf{Intracellular Region:} Rendered in {\color{gray}gray}, initially, representing the dense, protein-rich cytoplasm of the cell's interior.
-    \item \textbf{Cell Membrane:} Rendered in {\color{MembraneOrange}orange} to represent the hydrophobic (i.e., water repelling) phospholipid bilayer that creates the cellular wall, separating the intra- and extracellular regions.
     \item \textbf{Extracellular Region:} Rendered in {\color{HBRSblue}light blue} to represent the aqueous, water-rich environment surrounding the cell.
+    \item \textbf{Cell Membrane:} Rendered in {\color{MembraneOrange}orange} to represent the hydrophobic (i.e., water repelling) phospholipid bilayer that creates the cellular wall, separating the intra- and extracellular regions.
+    \item \textbf{Protein Pores:} Rendered in white to represent the tappered protein that spans the cellular wall, allowing ions to flow across.
 \end{itemize}
 
 \section{Core Simulation Modules}
