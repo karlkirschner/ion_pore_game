@@ -1,0 +1,194 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox} 
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+% Custom Colors based on Python HEX/RGB
+\definecolor{HBRSblue}{RGB}{0, 158, 224}
+\definecolor{MembraneOrange}{RGB}{255, 165, 0}
+\definecolor{PoreGray}{RGB}{240, 240, 240}
+
+\title{CytoTransport Game}
+\author{A Science-Based Ion Transport Simulation Game}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+This game serves as a dynamic model of ion transport across a biological cell membrane. It illustrates how physical barriers and protein pore structures regulate the internal environment of a cell. The environement is split into three distinct regions:
+\begin{itemize}
+    \item \textbf{Intracellular Region:} Rendered in {\color{gray}gray}, initially, representing the dense, protein-rich cytoplasm of the cell's interior.
+    \item \textbf{Cell Membrane:} Rendered in {\color{MembraneOrange}orange} to represent the hydrophobic (i.e., water repelling) phospholipid bilayer that creates the cellular wall, separating the intra- and extracellular regions.
+    \item \textbf{Extracellular Region:} Rendered in {\color{HBRSblue}light blue} to represent the aqueous, water-rich environment surrounding the cell.
+\end{itemize}
+
+\section{Core Simulation Modules}
+
+\subsection{The Selective Permeability of the Lipid Bilayer}
+The {\color{MembraneOrange}\textbf{orange}} horizontal bar represents the phospholipid bilayer. In a biological context, this membrane is \textbf{hydrophobic}, meaning charged ions (e.g., $Na^+$, $K^+$, $Cl^-$) cannot simply pass through it.
+
+\begin{tcolorbox}[colback=MembraneOrange!10,colframe=MembraneOrange!50!black,title=Game Mechanic: The Lipid Bilayer Barrier]
+Ions that collide with the orange segments are reflected back.
+\begin{itemize}
+    \item \textbf{Bounce Logic:} \texttt{ion.vy = abs(ion.vy)} ensures a downward trajectory.
+    \item \textbf{Randomness:} \texttt{ion.vx = random.uniform(-2, 2)} simulates slight scattering.
+\end{itemize}
+\textbf{Scientific Basis:} This represents the high energy barrier required for an ion to move through the non-polar fatty acid tails. The change in trajectory reflects the scattering effect of hitting a dense, hydrophobic molecular layer and the multitude of intermolecular forces that occur.
+\end{tcolorbox}
+
+
+
+[Image of the phospholipid bilayer structure]
+
+
+\subsection{Channel Architecture: Tapered Pore Proteins, Steric Exclusion and Gating Thresholds}
+The ion channels are rendered as {\color{gray}\textbf{light gray}} tapered wedges using \texttt{pygame.draw.polygon}. 
+
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Channel Architecture: Tapered Protein Wedges]
+The protein structures forming the pores are rendered as oriented 4-point polygons to reflect biological asymmetry.
+\begin{itemize}
+    \item \textbf{Vestibule Geometry:} The wedges are anchored at the gap boundaries (\texttt{gl, gr}). They extend into the membrane with a depth of 15px.
+    \item \textbf{Internal Taper:} The top points of the wedges (intracellular side) extend a further 6px into the channel than the bottom points.
+    \item \textbf{Result:} This creates a physical bottleneck that narrows toward the cell interior.
+\end{itemize}
+
+\textbf{Scientific Reality (Extracellular Vestibule):} The wider bottom represents the water-filled entrance of a channel. This lowers the electrostatic energy barrier, effectively "harvesting" ions from the extracellular space.
+
+\textbf{Scientific Reality (Selectivity Filter):} The narrowing at the top models the \textbf{Selectivity Filter}. In channels like $K^+$, this narrow region forces ions to shed their \textbf{hydration shells} (water molecules) and interact directly with the protein's carbonyl oxygens. This ensures that only ions of the correct size and charge can successfully translocate.
+\end{tcolorbox}
+
+
+A key refinement in the simulation is the enforcement of physical occupancy limits within the channel.
+
+\begin{tcolorbox}[colback=red!5,colframe=red!50!black,title=Game Mechanic: Size-Dependent Collision]
+The collision logic now evaluates the \texttt{ion.rect} boundaries against the pore's \texttt{current\_gap}. 
+\begin{itemize}
+    \item \textbf{Partial Blockage:} If any part of the ion's width ($r$) overlaps with the tapered protein wedges, a collision is registered.
+    \item \textbf{Gating Limit:} If $\text{PoreWidth} < \text{IonSize}$, the probability of passage drops to zero.
+\end{itemize}
+\textbf{Scientific Reality:} This models \textbf{Steric Exclusion}. In biological membranes, the Permeability ($P$) of a channel is not just a binary ``open/closed'' state but a function of the pore's radius relative to the ion's \textbf{hydrated radius}. If the pore constricts below a certain threshold, the energetic cost of dehydration or physical crowding prevents the ion from translocating.
+\end{tcolorbox}
+
+
+\subsection{Ion Channels and Conformational Change}
+The pores systematically enlarge and shrink, simulating the movement of protein subunits.
+
+\begin{tcolorbox}[colback=MembraneOrange!10,colframe=MembraneOrange!50!black,title=Game Mechanic: Sinusoidal Gating]
+Pore width is determined by a sine wave:
+\[ \text{CurrentGap} = \text{BaseGap} + \sin(\text{timer}) \cdot \text{Amplitude} \]
+
+\textbf{Scientific Reality:} This simulates \textbf{conformational change} or ``gating.'' Channels respond to various stimuli to open and close their central pore, regulating the rate of flux.
+\end{tcolorbox}
+
+\subsection{Ion Characteristics}
+\subsubsection{Ion Selectivity}
+The simulation allows for multiple ion species, each defined by a unique \textbf{Ionic Radius} and \textbf{Hydration Shell} proxy.
+
+\begin{tcolorbox}[colback=yellow!5,colframe=yellow!50!black,title=Game Mechanic: Variable Hitboxes]
+The \texttt{Ion} class accepts a \texttt{size} parameter. Larger ions (e.g., $K^{+}$) have a wider \texttt{pygame.Rect}, making it physically more difficult to pass through the narrowing wedge of the pore during its ``constricted'' sine-wave phase.
+
+\textbf{Scientific Reality:} This models \textbf{Steric Hindrance}. In a real cell, ion channels are highly selective. A channel might be physically too narrow for a large ion to pass, or it may require the ion to shed its ``hydration shell'' (water molecules sticking to the charge) to fit through the selectivity filter.
+\end{tcolorbox}
+
+\begin{table}[h!]
+\centering
+\caption{Possible ions. The size of the ions corresponds to their radii (scale: $7 \text{px} = 1.0 \text{\AA}$)}
+\begin{tabular}{l|c|c|c|l}
+\hline\hline
+\textbf{Ion} & \textbf{Charge} & \textbf{Atomic Radius (\AA)} & \textbf{Color} & \textbf{Biological Context}\\ \hline
+Sodium ($Na^+$)    & $+1$ & $1.0$ & {\color{blue}Blue}             &  \\
+Calcium ($Ca^{2+}$)& $+2$ & $1.0$ & {\color{yellow!80!black}Yellow}&  \\
+Potassium ($K^+$)  & $+1$ & $1.4$ & {\color{purple}Purple}         &  \\
+Chloride ($Cl^-$)  & $-1$ & $1.8$ & {\color{green!70!black}Green}  &  \\
+\hline\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Ion Kinematics and Viscosity}
+The simulation assigns a unique velocity vector to each ion species, creating a non-uniform flux rate.
+
+\begin{tcolorbox}[colback=cyan!5,colframe=cyan!50!black,title=Game Mechanic: Velocity-Size Scaling]
+Ion speed is inversely proportional to ion size:
+\begin{itemize}
+    \item \textbf{Small Ions ($Na^+$):} High velocity ($v = -6$), mimicking high kinetic energy.
+    \item \textbf{Large Ions ($Cl^-$):} Low velocity ($v = -2$), mimicking high fluid resistance.
+\end{itemize}
+\textbf{Scientific Reality:} This reflects the \textbf{Stokes-Einstein Relation}. In a viscous medium like the extracellular fluid, larger particles experience greater hydrodynamic drag. This results in a lower diffusion coefficient, meaning they migrate more slowly toward the membrane than smaller particles.
+\end{tcolorbox}
+
+
+\subsection{Concentration Gradients (Visual Feedback)}
+The background colors provide immediate visual feedback regarding the compartmentalization of the cell.
+
+\begin{tcolorbox}[colback=red!5,colframe=red!50!black,title=Game Mechanic: Environmental Contrast]
+\textbf{Extracellular (Static):} The bottom half of the screen remains {\color{HBRSblue}light blue}, reflecting a stable, water-rich environment.
+\smallskip
+\textbf{Intracellular (Dynamic):} The top half starts as a \textbf{light gray}, indicating a neutral internal environment. As the \texttt{intracellular\_count} rises, this gray transitions toward red.
+
+\textbf{Scientific Reality:} The color shift from {\color{HBRSblue}light blue} to gray highlights that the intracellular and extracellular environments are not identical. The cytoplasm is a crowded environment filled with organelles, proteins, and cytoskeletal structures, which is represented by the initial gray neutral tone, distinct from the {\color{HBRSblue}light blue} "water" outside.
+\end{tcolorbox}
+
+While the background color provides visual feedback of the gradient, the physical manifestation of this gradient is handled by the Pressure Factor (see Section 2.5).
+
+
+\subsubsection{The Pressure Factor (Kinetic Logic)}
+The simulation tracks a \texttt{pressure\_multiplier} ($\Pi$) which acts as a scalar for the velocity vectors of internal particles.
+
+\begin{tcolorbox}[colback=red!5,colframe=red!50!black,title=Game Mechanic: Kinetic Scaling]
+The multiplier $\Pi$ is calculated as:
+\begin{equation}
+    \Pi = 1.0 + \left( \frac{n_{intracellular}}{25.0} \right)
+\end{equation}
+When an ion $\vec{v}$ collides with a boundary, the new velocity $\vec{v}'$ is determined by:
+\begin{equation}
+    \vec{v}' = -(\vec{v} \cdot \Pi)
+\end{equation}
+\textbf{Scientific Reality:} This represents \textbf{Chemical Potential} ($\mu$). In high-concentration systems, the number of molecular collisions per second increases, effectively increasing the "force" pushing particles back toward the pores.
+\end{tcolorbox}
+
+
+\begin{table}[h]
+\centering
+\caption{Scaling Reference Table}
+\renewcommand{\arraystretch}{1.2} % Makes the rows roomier
+\begin{tabular}{lcl}
+\hline
+\textbf{Ion Count} & \textbf{Multiplier ($\Pi$)} & \textbf{Thermodynamic State} \\ \hline
+$0$                & $1.00\times$                & Ground State (Light Gray) \\ 
+$10$               & $1.40\times$                & Low Concentration (Pale Pink) \\ 
+$25$               & $2.00\times$                & High Flux (Salmon Red) \\ 
+$50$               & $3.00\times$                & Saturation/Critical Pressure (Deep Red) \\ \hline
+\end{tabular}
+\end{table}
+
+
+\subsection{Mid-Pore Boundary}
+The intracellular environment is visually and physically represented as extending into the membrane.
+
+\begin{tcolorbox}[colback=HBRSblue!5,colframe=HBRSblue!50!black,title=Game Mechanic: Mid-Pore Transition]
+The intracellular background rectangle is drawn to \texttt{MEMBRANE\_Y + (THICKNESS / 2)}. 
+
+\textbf{Scientific Reality:} This represents the \textbf{Aqueous Pore}. The internal fluid of the cell partially penetrates the channel protein, allowing ions to enter the ``exit vestibule'' before fully leaving the membrane.
+\end{tcolorbox}
+
+
+\section{Future Development \& Feature Ideas}
+\begin{itemize}
+    \item \textbf{Ion Selectivity:} Introduce different radii for ions (e.g., $Ca^{2+}$ vs $Na^+$).
+    \item \textbf{Relative Position:} Move the cell wall along the y-axis.
+    \item \textbf{Modulators:} Add molecules that changes the pore dynamics (e.g., closed, open).
+    \item \textbf{Extracellular Proteins:} Add extracellular proteins that float and block the pores access briefly.
+    \item \textbf{Intracellular Proteins:} add intracellular organelles that consume the ions.
+    \item \textbf{Multiple Ion Types:} Add the ability to cycle through different ions (and thus, their sizes).
+    \item \textbf{Ion nature dependency:} Provide a specific "Score Multiplier" logic in the Python code so that successfully transporting a slow, bulky chloride ion gives the player more points than a fast sodium ion? Maybe also think about the role of the formal charge, or the effects of hydration (e.g., sodium ion has a tight solvation shell, making its effect size and speed slower).
+    \item \textbf{Electrochemical Gradients:} Program pores with a static charge to attract or repel specific ion types.
+    \item \textbf{Active Transport:} Add a ``Pump'' mechanic requiring energy (ATP) to move ions against the pressure gradient.
+\end{itemize}
+
+\end{document}
