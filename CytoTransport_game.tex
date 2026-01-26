@@ -5,11 +5,15 @@
 \usepackage{tcolorbox} 
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage{enumitem}
 
 % Custom Colors based on Python HEX/RGB
 \definecolor{HBRSblue}{RGB}{0, 158, 224}
 \definecolor{MembraneOrange}{RGB}{255, 165, 0}
 \definecolor{PoreGray}{RGB}{240, 240, 240}
+
+\usepackage[pdftex,outline]{contour}
+\newcommand{\whitefont}[1]{\contour{black}{\textcolor{white}{#1}}}
 
 \title{A Science-Based Ion Transport Simulation Game\\CytoTransport}
 \author{K.N. Kirschner}
@@ -20,26 +24,33 @@
 \maketitle
 
 \section{Overview}
-This game serves as a dynamic model of ion transport across a biological cell membrane. It illustrates how physical barriers and protein pore structures regulate the internal environment of a cell. The environement is split into three distinct regions:
-\begin{itemize}
-    \item \textbf{Intracellular Region:} Rendered in {\color{gray}gray}, initially, representing the dense, protein-rich cytoplasm of the cell's interior.
-    \item \textbf{Extracellular Region:} Rendered in {\color{HBRSblue}light blue} to represent the aqueous, water-rich environment surrounding the cell.
-    \item \textbf{Cell Membrane:} Rendered in {\color{MembraneOrange}orange} to represent the hydrophobic (i.e., water repelling) phospholipid bilayer that creates the cellular wall, separating the intra- and extracellular regions.
-    \item \textbf{Protein Pores:} Rendered in white to represent the tappered protein that spans the cellular wall, allowing ions to flow across.
-\end{itemize}
+This game simulates the dynamics of ion transport across a biological cell membrane. It illustrates how physical barriers and protein pore structures regulate the internal environment of a cell. The cell's environment is split into four distinct components:
 
+\begin{description}
+    \item[Intracellular Region:] Represents the protein-rich cytoplasm of the cell's interior. Rendered in {\color{gray}gray}, initially, and changes to {\color{red}red} as the ion concentration increases.
+    
+    \item[Extracellular Region:] Represents the aqueous, water-rich environment surrounding the cell. Rendered in {\color{HBRSblue}light blue}.
+    
+    \item[Cell Membrane:] Represents the hydrophobic (i.e., water repelling) phospholipid bilayer that creates the cellular wall, separating the intra- and extracellular regions. Rendered in {\color{MembraneOrange}orange}.
+    
+    \item[Protein Pores:] Represent the tapered protein that spans the cellular wall, allowing ions to flow across. Rendered in \whitefont{white}.
+\end{description}
+ 
 \section{Core Simulation Modules}
 
-\subsection{The Selective Permeability of the Lipid Bilayer}
-The {\color{MembraneOrange}\textbf{orange}} horizontal bar represents the phospholipid bilayer. In a biological context, this membrane is \textbf{hydrophobic}, meaning charged ions (e.g., $Na^+$, $K^+$, $Cl^-$) cannot simply pass through it.
+\subsection{The Hydrophobic Lipid Bilayer}
+The phospholipid bilayer is \textbf{hydrophobic} and forms the cell wall. Due to its hydrophobicity, polar molecules (e.g., $H_2O$) and charged ions (e.g., $Na^+$, $K^+$, $Cl^-$) are unable to simply pass through it. Instead, nature created alternative pathways, including protein ion pores. Due to the water-rich intra- and extracellular environments, ions (plus polar molecules and other biopolymers) can move around. 
 
 \begin{tcolorbox}[colback=MembraneOrange!10,colframe=MembraneOrange!50!black,title=Game Mechanic: The Lipid Bilayer Barrier]
-Ions that collide with the orange segments are reflected back.
-\begin{itemize}
-    \item \textbf{Bounce Logic:} \texttt{ion.vy = abs(ion.vy)} ensures a downward trajectory.
-    \item \textbf{Randomness:} \texttt{ion.vx = random.uniform(-2, 2)} simulates slight scattering.
-\end{itemize}
-\textbf{Scientific Basis:} This represents the high energy barrier required for an ion to move through the non-polar fatty acid tails. The change in trajectory reflects the scattering effect of hitting a dense, hydrophobic molecular layer and the multitude of intermolecular forces that occur.
+	Ions interact with the lipid bilayer through collisions and are randomly scattered back.\\
+	
+	\textbf{Scientific Basis:} The ion scattering represents the high energy barrier that an ion encounters when attempting to diffuse through the phospholipid's non-polar fatty acid tails. The change in the ion's trajectory reflects the scattering effect of hitting a dense, hydrophobic and heterogeneous molecular cell barrier, and the multitude of intermolecular forces that occur.\\
+	
+	\textbf{Code:}
+	\begin{itemize}
+	    \item \textbf{Bounce Logic:} \texttt{ion.vy = abs(ion.vy)} ensures a downward trajectory.
+	    \item \textbf{Randomness:} \texttt{ion.vx = random.uniform(-2, 2)} simulates slight scattering.
+	\end{itemize}
 \end{tcolorbox}
 
 
