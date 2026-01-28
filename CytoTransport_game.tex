@@ -42,27 +42,27 @@ This game simulates the dynamics of ion transport across a biological cell membr
 \end{description}
  
  
-\begin{figure}[htbp]
-     \centering
-     \begin{subfigure}[b]{0.45\textwidth}
-         \centering
-         \includegraphics[width=\textwidth]{images/nAChR_lipids_cg_side.png}
-         \caption{Side view: Extracellular (top), lipid bilayer (middle) and intracellular (bottom) regions.}
-     \end{subfigure}
-     \hfill % This pushes the two images apart
-     \begin{subfigure}[b]{0.45\textwidth}
-         \centering
-         \includegraphics[width=\textwidth]{images/nAChR_lipids_cg_top.png}
-         \caption{Top view: The tapering of protein's structure.}
-     \end{subfigure}
-     \caption{A protein pore transversing through a lipid bilayer.}
-     \label{fig:comchem_model}
-\end{figure}
+%\begin{figure}[htbp]
+%     \centering
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{images/nAChR_lipids_cg_side.png}
+%         \caption{Side view: Extracellular (top), lipid bilayer (middle) and intracellular (bottom) regions.}
+%     \end{subfigure}
+%     \hfill % This pushes the two images apart
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{images/nAChR_lipids_cg_top.png}
+%         \caption{Top view: The tapering of protein's structure.}
+%     \end{subfigure}
+%     \caption{A protein pore transversing through a lipid bilayer.}
+%     \label{fig:comchem_model}
+%\end{figure}
 
 \section{Game Design (i.e., the Model)}
 
 \subsection{The Hydrophobic Lipid Bilayer}
-The phospholipid bilayer is \textbf{hydrophobic} and forms the cell wall. Due to its hydrophobicity, polar molecules (e.g., $H_2O$) and charged ions (e.g., $Na^+$, $K^+$, $Cl^-$) are unable to simply pass through it. Instead, nature created alternative pathways, including protein ion pores. Due to the water-rich intra- and extracellular environments, ions (plus polar molecules and other biopolymers) can move around. 
+The phospholipid bilayer is \textbf{hydrophobic} and forms the cell wall. Due to its hydrophobicity, polar molecules (e.g., $H_2O$) and charged ions (e.g., $Na^+$, $K^+$, $Cl^-$) are unable to simply pass through it. Instead, nature created alternative pathways, including protein ion pores. Due to the water-rich intra- and extracellular environments, ions (plus polar molecules and other biopolymers) can move around.
 
 \begin{tcolorbox}[colback=MembraneOrange!10,colframe=MembraneOrange!50!black,title=Game Mechanic: The Lipid Bilayer Barrier]
 	Ions interact with the lipid bilayer through collisions and are randomly scattered back.\\
@@ -79,9 +79,9 @@ The phospholipid bilayer is \textbf{hydrophobic} and forms the cell wall. Due to
 
 \subsection{Protein Ion Channels}
 
-Cells need nutrients and to communicate with each other, which means that molecules and ion must pass from the extracellular to the intracellular region. While nonpolar molecules are able to diffuse through the hydrophobic lipid bilayer, many polar species must find alternative routes. As one solution, nature has created proteins that form mechanical pores that transverse the cell membrane. 
+Cells need nutrients and to communicate with each other, which means that molecules and ion must pass from the extracellular to the intracellular region. While nonpolar molecules are able to diffuse through the hydrophobic lipid bilayer, many polar species must find alternative routes. As one solution, nature has created proteins that form mechanical pores that transverse the cell membrane.
 
-\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Game Mechanic: Tapered Protein Wedges]
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50!black,title=Game Mechanic: Tapered Protein Wedges]
 
 	\textbf{Scientific Basis:} The wider bottom represents the water-filled entrance of a channel. This lowers the electrostatic energy barrier, allowing ions to diffuse from the extracellular space into the channel. The channel's narrowing models the protein-specific \textbf{selectivity function}. Specific channels (e.g., Sodium Channel) are structured such that this narrow region forces ions to shed their \textbf{hydration shells} (i.e., $H_2O$ molecules) allowing ions of certain sizes (e.g., $Na^+$) to migrate through.\\
 
@@ -93,7 +93,7 @@ Cells need nutrients and to communicate with each other, which means that molecu
 
 \end{tcolorbox}
 
-\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Game Mechanic: Size-Dependent Filtering]
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50!black,title=Game Mechanic: Size-Dependent Filtering]
 
 	\textbf{Scientific Basis:} This mechanic models how pores filter ions based on their size (i.e., \textbf{Steric Exclusion}). The role that proteins channels have is diverse, ranging from nonselective to selective channels. Simplifying the complexity of ion-amino acid interactions that may occur and participation of modulators, selective ion channels can filter which ions pass as function of the pore's radius relative to the ion. If the pore constricts below a certain threshold, the ion is prohibited from moving through. In our game's model, we see that different sized ion have different difficulty getting through as the pore radius varies.\\
 
@@ -105,9 +105,9 @@ Cells need nutrients and to communicate with each other, which means that molecu
 
 \end{tcolorbox}
 
-\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Game Mechanic: Pore Opening and Closing]
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50!black,title=Game Mechanic: Pore Opening and Closing]
 
-	\textbf{Scientific Reality:} The protein channel's pore can increases and decrease due to structural changes in the protein's subunits (i.e., \textbf{gating}). To approximate this behavior, the proteins are translated horizontally.\\
+	\textbf{Scientific Basis:} The protein channel's pore can increases and decrease due to structural changes in the protein's subunits (i.e., \textbf{gating}). To approximate this behavior, the proteins are translated horizontally.\\
 
 	\textbf{Code:}
 	The protein channel's pore width is systematically changed using a sine wave:
@@ -117,10 +117,10 @@ Cells need nutrients and to communicate with each other, which means that molecu
 
 \subsection{Ion Characteristics}
 
-The simulation allows for multiple ion species, each defined by a unique \textbf{Ionic Radius} and \textbf{Hydration Shell} proxy.
+The human body requires many different ions for different reasons (e.g., Table \ref{tab:ions}). These ions have different sizes and properties. Their movement (i.e., velocity) through water is complicated, involving their size and how strongly they structure their surrounding water molecules. Ions that form well ordered and strong hydration shells essentially increase their size since they move more like a single unit.
 
-\begin{tcolorbox}[colback=yellow!5,colframe=yellow!50!black,title=Game Mechanic: Ion Size]
-	\textbf{Scientific Reality:} This models \textbf{Steric Hindrance}. In a real cell, ion channels are highly selective. A channel might be physically too narrow for a large ion to pass, or it may require the ion to shed its ``hydration shell'' (water molecules sticking to the charge) to fit through the selectivity filter.\\
+\begin{tcolorbox}[colback=yellow!5, colframe=yellow!50!black,title=Game Mechanic: Ion Size]
+	\textbf{Scientific Basis:} In a real cell, ion channels are highly selective. A channel might be physically too narrow for a large ion to pass, or it may require the ion to shed its ``hydration shell'' (water molecules sticking to the charge) to fit through the selectivity filter. The simulation allows for multiple ion species, each defined by a unique \textbf{Ionic Radius}.\\
 
 	\textbf{Code:}
 	The \texttt{Ion} class accepts a \texttt{size} parameter. Larger ions (e.g., $K^{+}$) have a wider \texttt{pygame.Rect}, making it physically more difficult to pass through the narrowing wedge of the pore during its ``constricted'' sine-wave phase.
@@ -128,9 +128,11 @@ The simulation allows for multiple ion species, each defined by a unique \textbf
 	\centering
 	{\small
     \captionof{table}{Possible ions (Scale: $7 \text{px} = 1.0 \text{\AA}$)}
+    \label{tab:ions}
 	\begin{tabular}{l|c|c|c|l}
 		\toprule
-		\textbf{Ion} & \textbf{Charge} & \textbf{Radius (\AA)} & \textbf{Color} & \textbf{Context}\\ \midrule
+		\textbf{Ion} & \textbf{Charge} & \textbf{Radius (\AA)} & \textbf{Color} & \textbf{Context} \\
+		\midrule
 		Sodium ($Na^+$)    & $+1$ & $1.0$ & {\color{MidnightBlue}Blue}  & Nerve impulses \\
 		Calcium ($Ca^{2+}$)& $+2$ & $1.0$ & {\color{Goldenrod}Yellow}   & Signaling \\
 		Potassium ($K^+$)  & $+1$ & $1.4$ & {\color{RoyalPurple}Purple} & Resting potential \\
@@ -141,16 +143,43 @@ The simulation allows for multiple ion species, each defined by a unique \textbf
 	
 \end{tcolorbox}
 
-\subsubsection{Ion Kinematics and Viscosity}
-The simulation assigns a unique velocity vector to each ion species, creating a non-uniform flux rate.
+\begin{tcolorbox}[colback=cyan!5,colframe=cyan!50!black,title=Game Mechanic: Ion Velocity Scaling]
 
-\begin{tcolorbox}[colback=cyan!5,colframe=cyan!50!black,title=Game Mechanic: Velocity-Size Scaling]
-Ion speed is inversely proportional to ion size:
-\begin{itemize}
-    \item \textbf{Small Ions ($Na^+$):} High velocity ($v = -6$), mimicking high kinetic energy.
-    \item \textbf{Large Ions ($Cl^-$):} Low velocity ($v = -2$), mimicking high fluid resistance.
-\end{itemize}
-\textbf{Scientific Reality:} This reflects the \textbf{Stokes-Einstein Relation}. In a viscous medium like the extracellular fluid, larger particles experience greater hydrodynamic drag. This results in a lower diffusion coefficient, meaning they migrate more slowly toward the membrane than smaller particles.
+	\textbf{Scientific Basis:} The game assigns a unique velocity vector to each ion species. A particle's movement can be explained by the closely related \textbf{Jones-Dole Relation} and the \textbf{Stokes-Einstein Relation}. The Jones-Dole relationship expresses how an ion changes the local water structure (i.e., how tightly bound its hydration shell is), while the Stokes-Einstein relationship measure how the ion moves through water.
+
+The B-coefficient determines the ion's impact on the local solvent structure \cite{JenkinsY2995} as expressed in the \textbf{Jones-Dole Relation}:
+\[ \eta_{rel} = 1 + A\sqrt{c} + Bc \]
+where $\eta_{rel}$ is the relative velocity, A and B are coefficients, and $c$ is the molar concentration. The large B-coefficient values indicate smaller velocity.\\
+
+The \textbf{Stokes-Einstein Relation} is defined as:
+\[ D = \frac{k_B T}{6 \pi \eta r} \]
+where $D$ is the diffusion coefficient, $k_B$ is the Boltzmann constant, $T$ is the temperature, $\eta$ is the dynamic viscosity and $r$ is the hydrodynamic (Stokes) radius of the particle.\\
+	
+	Ions with a \textbf{large positive B-coefficient} (like $Na^+$ and $Ca^{2+}$) strongly coordinate water molecules, increasing the local viscosity and effectively increasing their \textbf{Stokes Radius}. This is why these ions move more slowly in the simulation compared to "structure breakers" like $K^+$, which have negative B-coefficients and lower the local resistance to flow.
+
+	\textbf{Code:}
+%Ion speed is inversely proportional to ion size:
+%\begin{itemize}
+%    \item \textbf{Small Ions ($Na^+$):} High velocity ($v = -6$), mimicking high kinetic energy.
+%    \item \textbf{Large Ions ($Cl^-$):} Low velocity ($v = -2$), mimicking high fluid resistance.
+%\end{itemize}
+	
+	\centering
+	{\small
+    \captionof{table}{Ions and their aqueous B-coefficients at  $25\ ^oC$ ($dm^3 \cdot mol^{-1}$) \cite{JenkinsY2995} and Radius (\AA) \cite{Marcus1988}.}
+    \label{tab:ions}
+	\begin{tabular}{l|c|c|c}
+		\toprule
+		\textbf{Ion} & \textbf{B-Coefficients} & \textbf{Radius} & \textbf{Context} \\
+		\midrule
+		Potassium ($K^+$)     & -0.009 & $1.41$ & less ordered local structure; fast velocity \\
+		Chloride  ($Cl^-$)    & -0.005 & $1.80$ & less ordered local structure; fast velocity \\
+		Sodium    ($Na^+$)    & 0.085  & $0.97$ & high ordered local structure; medium velocity \\
+		Calcium   ($Ca^{2+}$) & 0.284  & $1.03$ & high ordered local structure; slow velocity \\
+		Magnesium ($Mg^{2+}$) & 0.385  & $0.70$ & high ordered local structure; slowest velocity \\
+		\bottomrule
+	\end{tabular}
+	}
 \end{tcolorbox}
 
 
@@ -221,5 +250,12 @@ The intracellular background rectangle is drawn to \texttt{MEMBRANE\_Y + (THICKN
     \item \textbf{Electrochemical Gradients:} Program pores with a static charge to attract or repel specific ion types.
     \item \textbf{Active Transport:} Add a ``Pump'' mechanic requiring energy (ATP) to move ions against the pressure gradient.
 \end{itemize}
+
+\begin{thebibliography}{11}
+
+	\bibitem{Marcus1988} Marcus, Yizhak. "Ionic radii in aqueous solutions." Chemical Reviews 88, no. 8 (1988): 1475-1498.
+	\bibitem{JenkinsY2995} Jenkins, H. Donald B., and Yizhak Marcus. "Viscosity B-coefficients of ions in solution." Chemical reviews 95, no. 8 (1995): 2695-2724.
+
+\end{thebibliography}
 
 \end{document}
