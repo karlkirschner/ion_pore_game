@@ -1,18 +1,23 @@
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[margin=1in]{geometry}
-\usepackage{xcolor}
-\usepackage{tcolorbox} 
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+\usepackage[dvipsnames, svgnames, table]{xcolor}
+\usepackage{tcolorbox}
+
 \usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\usepackage{booktabs}
 
 % Custom Colors based on Python HEX/RGB
 \definecolor{HBRSblue}{RGB}{0, 158, 224}
 \definecolor{MembraneOrange}{RGB}{255, 165, 0}
 \definecolor{PoreGray}{RGB}{240, 240, 240}
 
-\usepackage[pdftex,outline]{contour}
+\usepackage[pdftex, outline]{contour}
 \newcommand{\whitefont}[1]{\contour{black}{\textcolor{white}{#1}}}
 
 \title{A Science-Based Ion Transport Simulation Game\\CytoTransport}
@@ -24,7 +29,7 @@
 \maketitle
 
 \section{Overview}
-This game simulates the dynamics of ion transport across a biological cell membrane. It illustrates how physical barriers and protein pore structures regulate the internal environment of a cell. The cell's environment is split into four distinct components:
+This game simulates the dynamics of ion transport across a biological cell membrane (see Figure \ref{fig:comchem_model}). It illustrates how physical barriers and protein pore structures regulate the internal environment of a cell. The cell's environment is split into four distinct components:
 
 \begin{description}
     \item[Intracellular Region:] Represents the protein-rich cytoplasm of the cell's interior. Rendered in {\color{gray}gray}, initially, and changes to {\color{red}red} as the ion concentration increases.
@@ -36,91 +41,105 @@ This game simulates the dynamics of ion transport across a biological cell membr
     \item[Protein Pores:] Represent the tapered protein that spans the cellular wall, allowing ions to flow across. Rendered in \whitefont{white}.
 \end{description}
  
-\section{Core Simulation Modules}
+ 
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/nAChR_lipids_cg_side.png}
+         \caption{Side view: Extracellular (top), lipid bilayer (middle) and intracellular (bottom) regions.}
+     \end{subfigure}
+     \hfill % This pushes the two images apart
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/nAChR_lipids_cg_top.png}
+         \caption{Top view: The tapering of protein's structure.}
+     \end{subfigure}
+     \caption{A protein pore transversing through a lipid bilayer.}
+     \label{fig:comchem_model}
+\end{figure}
+
+\section{Game Design (i.e., the Model)}
 
 \subsection{The Hydrophobic Lipid Bilayer}
 The phospholipid bilayer is \textbf{hydrophobic} and forms the cell wall. Due to its hydrophobicity, polar molecules (e.g., $H_2O$) and charged ions (e.g., $Na^+$, $K^+$, $Cl^-$) are unable to simply pass through it. Instead, nature created alternative pathways, including protein ion pores. Due to the water-rich intra- and extracellular environments, ions (plus polar molecules and other biopolymers) can move around. 
 
 \begin{tcolorbox}[colback=MembraneOrange!10,colframe=MembraneOrange!50!black,title=Game Mechanic: The Lipid Bilayer Barrier]
 	Ions interact with the lipid bilayer through collisions and are randomly scattered back.\\
-	
+
 	\textbf{Scientific Basis:} The ion scattering represents the high energy barrier that an ion encounters when attempting to diffuse through the phospholipid's non-polar fatty acid tails. The change in the ion's trajectory reflects the scattering effect of hitting a dense, hydrophobic and heterogeneous molecular cell barrier, and the multitude of intermolecular forces that occur.\\
-	
+
 	\textbf{Code:}
 	\begin{itemize}
 	    \item \textbf{Bounce Logic:} \texttt{ion.vy = abs(ion.vy)} ensures a downward trajectory.
 	    \item \textbf{Randomness:} \texttt{ion.vx = random.uniform(-2, 2)} simulates slight scattering.
 	\end{itemize}
+
 \end{tcolorbox}
 
+\subsection{Protein Ion Channels}
 
+Cells need nutrients and to communicate with each other, which means that molecules and ion must pass from the extracellular to the intracellular region. While nonpolar molecules are able to diffuse through the hydrophobic lipid bilayer, many polar species must find alternative routes. As one solution, nature has created proteins that form mechanical pores that transverse the cell membrane. 
 
-[Image of the phospholipid bilayer structure]
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Game Mechanic: Tapered Protein Wedges]
 
+	\textbf{Scientific Basis:} The wider bottom represents the water-filled entrance of a channel. This lowers the electrostatic energy barrier, allowing ions to diffuse from the extracellular space into the channel. The channel's narrowing models the protein-specific \textbf{selectivity function}. Specific channels (e.g., Sodium Channel) are structured such that this narrow region forces ions to shed their \textbf{hydration shells} (i.e., $H_2O$ molecules) allowing ions of certain sizes (e.g., $Na^+$) to migrate through.\\
 
-\subsection{Channel Architecture: Tapered Pore Proteins, Steric Exclusion and Gating Thresholds}
-The ion channels are rendered as {\color{gray}\textbf{light gray}} tapered wedges using \texttt{pygame.draw.polygon}. 
+	\textbf{Code:}
+	\begin{itemize}
+		\item \textbf{Model:} The proteins the form the ion channel are rendered as {\color{gray}\textbf{light gray}} tapered wedges using \texttt{pygame.draw.polygon}. 
+		\item \textbf{Geometry:} The protein pore structures are rendered as oriented 4-point polygons to reflect the pore's geometry. The wedges are anchored at the gap boundaries (\texttt{gl, gr}), and extend into the membrane with a depth of 15px. The top points of the wedges (intracellular side) extend horizontally an additional 6px into the channel than the bottom points.
+	\end{itemize}
 
-
-\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Channel Architecture: Tapered Protein Wedges]
-The protein structures forming the pores are rendered as oriented 4-point polygons to reflect biological asymmetry.
-\begin{itemize}
-    \item \textbf{Vestibule Geometry:} The wedges are anchored at the gap boundaries (\texttt{gl, gr}). They extend into the membrane with a depth of 15px.
-    \item \textbf{Internal Taper:} The top points of the wedges (intracellular side) extend a further 6px into the channel than the bottom points.
-    \item \textbf{Result:} This creates a physical bottleneck that narrows toward the cell interior.
-\end{itemize}
-
-\textbf{Scientific Reality (Extracellular Vestibule):} The wider bottom represents the water-filled entrance of a channel. This lowers the electrostatic energy barrier, effectively "harvesting" ions from the extracellular space.
-
-\textbf{Scientific Reality (Selectivity Filter):} The narrowing at the top models the \textbf{Selectivity Filter}. In channels like $K^+$, this narrow region forces ions to shed their \textbf{hydration shells} (water molecules) and interact directly with the protein's carbonyl oxygens. This ensures that only ions of the correct size and charge can successfully translocate.
 \end{tcolorbox}
 
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Game Mechanic: Size-Dependent Filtering]
 
-A key refinement in the simulation is the enforcement of physical occupancy limits within the channel.
+	\textbf{Scientific Basis:} This mechanic models how pores filter ions based on their size (i.e., \textbf{Steric Exclusion}). The role that proteins channels have is diverse, ranging from nonselective to selective channels. Simplifying the complexity of ion-amino acid interactions that may occur and participation of modulators, selective ion channels can filter which ions pass as function of the pore's radius relative to the ion. If the pore constricts below a certain threshold, the ion is prohibited from moving through. In our game's model, we see that different sized ion have different difficulty getting through as the pore radius varies.\\
 
-\begin{tcolorbox}[colback=red!5,colframe=red!50!black,title=Game Mechanic: Size-Dependent Collision]
-The collision logic now evaluates the \texttt{ion.rect} boundaries against the pore's \texttt{current\_gap}. 
-\begin{itemize}
-    \item \textbf{Partial Blockage:} If any part of the ion's width ($r$) overlaps with the tapered protein wedges, a collision is registered.
-    \item \textbf{Gating Limit:} If $\text{PoreWidth} < \text{IonSize}$, the probability of passage drops to zero.
-\end{itemize}
-\textbf{Scientific Reality:} This models \textbf{Steric Exclusion}. In biological membranes, the Permeability ($P$) of a channel is not just a binary ``open/closed'' state but a function of the pore's radius relative to the ion's \textbf{hydrated radius}. If the pore constricts below a certain threshold, the energetic cost of dehydration or physical crowding prevents the ion from translocating.
+	\textbf{Code:}
+	\begin{itemize}
+	    \item \textbf{Filtering:} If any part of the ion's width ($r$) overlaps with the tapered protein wedges, a \textbf{collision} is registered.
+		\item \textbf{Collision:} The collision logic evaluates the \texttt{ion.rect} boundaries against the pore's \texttt{current\_gap}.   If $\text{PoreWidth} < \text{IonSize}$, the probability of passage drops to zero and the ion is reflected.
+	\end{itemize}
+
 \end{tcolorbox}
 
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50!black,title=Game Mechanic: Pore Opening and Closing]
 
-\subsection{Ion Channels and Conformational Change}
-The pores systematically enlarge and shrink, simulating the movement of protein subunits.
+	\textbf{Scientific Reality:} The protein channel's pore can increases and decrease due to structural changes in the protein's subunits (i.e., \textbf{gating}). To approximate this behavior, the proteins are translated horizontally.\\
 
-\begin{tcolorbox}[colback=MembraneOrange!10,colframe=MembraneOrange!50!black,title=Game Mechanic: Sinusoidal Gating]
-Pore width is determined by a sine wave:
-\[ \text{CurrentGap} = \text{BaseGap} + \sin(\text{timer}) \cdot \text{Amplitude} \]
+	\textbf{Code:}
+	The protein channel's pore width is systematically changed using a sine wave:
+	\[ \text{CurrentGap} = \text{BaseGap} + \sin(\text{timer}) \cdot \text{Amplitude} \]
 
-\textbf{Scientific Reality:} This simulates \textbf{conformational change} or ``gating.'' Channels respond to various stimuli to open and close their central pore, regulating the rate of flux.
 \end{tcolorbox}
 
 \subsection{Ion Characteristics}
-\subsubsection{Ion Selectivity}
+
 The simulation allows for multiple ion species, each defined by a unique \textbf{Ionic Radius} and \textbf{Hydration Shell} proxy.
 
-\begin{tcolorbox}[colback=yellow!5,colframe=yellow!50!black,title=Game Mechanic: Variable Hitboxes]
-The \texttt{Ion} class accepts a \texttt{size} parameter. Larger ions (e.g., $K^{+}$) have a wider \texttt{pygame.Rect}, making it physically more difficult to pass through the narrowing wedge of the pore during its ``constricted'' sine-wave phase.
+\begin{tcolorbox}[colback=yellow!5,colframe=yellow!50!black,title=Game Mechanic: Ion Size]
+	\textbf{Scientific Reality:} This models \textbf{Steric Hindrance}. In a real cell, ion channels are highly selective. A channel might be physically too narrow for a large ion to pass, or it may require the ion to shed its ``hydration shell'' (water molecules sticking to the charge) to fit through the selectivity filter.\\
 
-\textbf{Scientific Reality:} This models \textbf{Steric Hindrance}. In a real cell, ion channels are highly selective. A channel might be physically too narrow for a large ion to pass, or it may require the ion to shed its ``hydration shell'' (water molecules sticking to the charge) to fit through the selectivity filter.
+	\textbf{Code:}
+	The \texttt{Ion} class accepts a \texttt{size} parameter. Larger ions (e.g., $K^{+}$) have a wider \texttt{pygame.Rect}, making it physically more difficult to pass through the narrowing wedge of the pore during its ``constricted'' sine-wave phase.
+
+	\centering
+	{\small
+    \captionof{table}{Possible ions (Scale: $7 \text{px} = 1.0 \text{\AA}$)}
+	\begin{tabular}{l|c|c|c|l}
+		\toprule
+		\textbf{Ion} & \textbf{Charge} & \textbf{Radius (\AA)} & \textbf{Color} & \textbf{Context}\\ \midrule
+		Sodium ($Na^+$)    & $+1$ & $1.0$ & {\color{MidnightBlue}Blue}  & Nerve impulses \\
+		Calcium ($Ca^{2+}$)& $+2$ & $1.0$ & {\color{Goldenrod}Yellow}   & Signaling \\
+		Potassium ($K^+$)  & $+1$ & $1.4$ & {\color{RoyalPurple}Purple} & Resting potential \\
+		Chloride ($Cl^-$)  & $-1$ & $1.8$ & {\color{ForestGreen}Green}   & Inhibition \\
+		\bottomrule
+	\end{tabular}
+	}
+	
 \end{tcolorbox}
-
-\begin{table}[h!]
-\centering
-\caption{Possible ions. The size of the ions corresponds to their radii (scale: $7 \text{px} = 1.0 \text{\AA}$)}
-\begin{tabular}{l|c|c|c|l}
-\hline\hline
-\textbf{Ion} & \textbf{Charge} & \textbf{Atomic Radius (\AA)} & \textbf{Color} & \textbf{Biological Context}\\ \hline
-Sodium ($Na^+$)    & $+1$ & $1.0$ & {\color{blue}Blue}             &  \\
-Calcium ($Ca^{2+}$)& $+2$ & $1.0$ & {\color{yellow!80!black}Yellow}&  \\
-Potassium ($K^+$)  & $+1$ & $1.4$ & {\color{purple}Purple}         &  \\
-Chloride ($Cl^-$)  & $-1$ & $1.8$ & {\color{green!70!black}Green}  &  \\
-\hline\hline
-\end{tabular}
-\end{table}
 
 \subsubsection{Ion Kinematics and Viscosity}
 The simulation assigns a unique velocity vector to each ion species, creating a non-uniform flux rate.
@@ -194,7 +213,7 @@ The intracellular background rectangle is drawn to \texttt{MEMBRANE\_Y + (THICKN
 \begin{itemize}
     \item \textbf{Ion Selectivity:} Introduce different radii for ions (e.g., $Ca^{2+}$ vs $Na^+$).
     \item \textbf{Relative Position:} Move the cell wall along the y-axis.
-    \item \textbf{Modulators:} Add molecules that changes the pore dynamics (e.g., closed, open).
+    \item \textbf{Modulators:} Add molecules that changes the pore dynamics (e.g., closed, open). Maybe change the function that regulates the opening and closing too.
     \item \textbf{Extracellular Proteins:} Add extracellular proteins that float and block the pores access briefly.
     \item \textbf{Intracellular Proteins:} add intracellular organelles that consume the ions.
     \item \textbf{Multiple Ion Types:} Add the ability to cycle through different ions (and thus, their sizes).
