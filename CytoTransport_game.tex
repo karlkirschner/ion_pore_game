@@ -117,7 +117,7 @@ Cells need nutrients and to communicate with each other, which means that molecu
 
 \subsection{Ion Characteristics}
 
-The human body requires many different ions for different reasons (e.g., Table \ref{tab:ions}). These ions have different sizes and properties. Their movement (i.e., velocity) through water is complicated, involving their size and how strongly they structure their surrounding water molecules. Ions that form well ordered and strong hydration shells essentially increase their size since they move more like a single unit.
+The human body requires many different ions for different reasons (e.g., Table \ref{tab:ions}). These ions have different sizes and properties. Their movement (i.e., velocity) through water is complicated, involving their size and how strongly they structure their surrounding water molecules. Ions that form well ordered and strong hydration shells essentially increase their size since they move more like a single unit. Even though cells need ions, too many (i.e., concentration - an amount per volume) can also be bad for cells and for human health.
 
 \begin{tcolorbox}[colback=yellow!5, colframe=yellow!50!black,title=Game Mechanic: Ion Size]
 	\textbf{Scientific Basis:} In a real cell, ion channels are highly selective. A channel might be physically too narrow for a large ion to pass, or it may require the ion to shed its ``hydration shell'' (water molecules sticking to the charge) to fit through the selectivity filter. The simulation allows for multiple ion species, each defined by a unique \textbf{Ionic Radius}.\\
@@ -140,7 +140,7 @@ The human body requires many different ions for different reasons (e.g., Table \
 		\bottomrule
 	\end{tabular}
 	}
-	
+
 \end{tcolorbox}
 
 \begin{tcolorbox}[colback=cyan!5,colframe=cyan!50!black,title=Game Mechanic: Ion Velocity Scaling]
@@ -154,8 +154,8 @@ where $\eta_{rel}$ is the relative velocity, A and B are coefficients, and $c$ i
 The \textbf{Stokes-Einstein Relation} is defined as:
 \[ D = \frac{k_B T}{6 \pi \eta r} \]
 where $D$ is the diffusion coefficient, $k_B$ is the Boltzmann constant, $T$ is the temperature, $\eta$ is the dynamic viscosity and $r$ is the hydrodynamic (Stokes) radius of the particle.\\
-	
-	Ions with a \textbf{large positive B-coefficient} (like $Na^+$ and $Ca^{2+}$) strongly coordinate water molecules, increasing the local viscosity and effectively increasing their \textbf{Stokes Radius}. This is why these ions move more slowly in the simulation compared to "structure breakers" like $K^+$, which have negative B-coefficients and lower the local resistance to flow.
+
+	Ions with a \textbf{large positive B-coefficient} (like $Na^+$ and $Ca^{2+}$) strongly coordinate water molecules, increasing the local viscosity and effectively increasing their \textbf{Stokes Radius}. This is why these ions move more slowly in the simulation compared to "structure breakers" like $K^+$, which have negative B-coefficients and lower the local resistance to flow.\\
 
 	\textbf{Code:}
 %Ion speed is inversely proportional to ion size:
@@ -163,7 +163,7 @@ where $D$ is the diffusion coefficient, $k_B$ is the Boltzmann constant, $T$ is 
 %    \item \textbf{Small Ions ($Na^+$):} High velocity ($v = -6$), mimicking high kinetic energy.
 %    \item \textbf{Large Ions ($Cl^-$):} Low velocity ($v = -2$), mimicking high fluid resistance.
 %\end{itemize}
-	
+
 	\centering
 	{\small
     \captionof{table}{Ions and their aqueous B-coefficients at  $25\ ^oC$ ($dm^3 \cdot mol^{-1}$) \cite{JenkinsY2995} and Radius (\AA) \cite{Marcus1988}.}
@@ -183,25 +183,18 @@ where $D$ is the diffusion coefficient, $k_B$ is the Boltzmann constant, $T$ is 
 \end{tcolorbox}
 
 
-\subsection{Concentration Gradients (Visual Feedback)}
-The background colors provide immediate visual feedback regarding the compartmentalization of the cell.
+\begin{tcolorbox}[colback=cyan!5,colframe=cyan!50!black,title=Game Mechanic: Intracellular Ion Concentration]
 
-\begin{tcolorbox}[colback=red!5,colframe=red!50!black,title=Game Mechanic: Environmental Contrast]
-\textbf{Extracellular (Static):} The bottom half of the screen remains {\color{HBRSblue}light blue}, reflecting a stable, water-rich environment.
-\smallskip
-\textbf{Intracellular (Dynamic):} The top half starts as a \textbf{light gray}, indicating a neutral internal environment. As the \texttt{intracellular\_count} rises, this gray transitions toward red.
+	\textbf{Scientific Basis:} The intracellular environment is filled with organelles, proteins, and cytoskeletal structures, which is represented by the initial {\color{gray}gray} neutral tone, distinct from the {\color{HBRSblue}light blue} ``water'' in the extracellular region. As the intracellular ion concentration increases it can have bad effects for the cell and human health. For example, increasing the ion concentration can also cause the cell's \textbf{Osmotic Pressure} to increase, resulting in pulling in more water into the cell (a hypotonic situation). Increased ion concentration can also be described by their \textbf{Chemical Potential} ($\mu$). In high-concentration systems, the number of molecular collisions per second increases, effectively increasing the "force" pushing particles back toward the pores.\\
 
-\textbf{Scientific Reality:} The color shift from {\color{HBRSblue}light blue} to gray highlights that the intracellular and extracellular environments are not identical. The cytoplasm is a crowded environment filled with organelles, proteins, and cytoskeletal structures, which is represented by the initial gray neutral tone, distinct from the {\color{HBRSblue}light blue} "water" outside.
-\end{tcolorbox}
+	\textbf{Code:}
 
-While the background color provides visual feedback of the gradient, the physical manifestation of this gradient is handled by the Pressure Factor (see Section 2.5).
+	\textbf{Intracellular (Dynamic):} To provide immediate visual feedback about the magnitude of the intracellular ion concentration, the intracellular background color changes. The top half starts as a \textbf{{\color{gray}gray}}, indicating a neutral internal environment. As the ion concentration rises, background transitions towards red.\\
 
+	\textbf{Extracellular (Static):} The bottom half of the screen remains {\color{HBRSblue}light blue}, reflecting a stable, water-rich environment.\\
 
-\subsubsection{The Pressure Factor (Kinetic Logic)}
-The simulation tracks a \texttt{pressure\_multiplier} ($\Pi$) which acts as a scalar for the velocity vectors of internal particles.
+	\textbf{Osmotic Pressure:}	The simulation tracks a \texttt{pressure\_multiplier} ($\Pi$) which acts as a scalar for the velocity vectors of internal particles. While the background color provides visual feedback of the concentration gradient, the physical manifestation of this gradient is modeled by a Pressure Factor calculated using:
 
-\begin{tcolorbox}[colback=red!5,colframe=red!50!black,title=Game Mechanic: Kinetic Scaling]
-The multiplier $\Pi$ is calculated as:
 \begin{equation}
     \Pi = 1.0 + \left( \frac{n_{intracellular}}{25.0} \right)
 \end{equation}
@@ -209,32 +202,22 @@ When an ion $\vec{v}$ collides with a boundary, the new velocity $\vec{v}'$ is d
 \begin{equation}
     \vec{v}' = -(\vec{v} \cdot \Pi)
 \end{equation}
-\textbf{Scientific Reality:} This represents \textbf{Chemical Potential} ($\mu$). In high-concentration systems, the number of molecular collisions per second increases, effectively increasing the "force" pushing particles back toward the pores.
-\end{tcolorbox}
 
+	\centering
+	{\small
+    \captionof{table}{Scaling and Pressure Multiplier as a Function of Ion Concentration.}
+	\begin{tabular}{lcl}
+	\hline\hline
+	\textbf{Ion Count} & \textbf{Multiplier ($\Pi$)} & \textbf{Concentration State} \\
+	\hline
+	$0$                & $1.00\times$                & Zero (Light Gray) \\ 
+	$10$               & $1.40\times$                & Low (Pale Pink) \\ 
+	$25$               & $2.00\times$                & Medium (Salmon Red) \\ 
+	$50$               & $3.00\times$                & High (Deep Red) \\
+	\hline\hline
+	\end{tabular}
+	}
 
-\begin{table}[h]
-\centering
-\caption{Scaling Reference Table}
-\renewcommand{\arraystretch}{1.2} % Makes the rows roomier
-\begin{tabular}{lcl}
-\hline
-\textbf{Ion Count} & \textbf{Multiplier ($\Pi$)} & \textbf{Thermodynamic State} \\ \hline
-$0$                & $1.00\times$                & Ground State (Light Gray) \\ 
-$10$               & $1.40\times$                & Low Concentration (Pale Pink) \\ 
-$25$               & $2.00\times$                & High Flux (Salmon Red) \\ 
-$50$               & $3.00\times$                & Saturation/Critical Pressure (Deep Red) \\ \hline
-\end{tabular}
-\end{table}
-
-
-\subsection{Mid-Pore Boundary}
-The intracellular environment is visually and physically represented as extending into the membrane.
-
-\begin{tcolorbox}[colback=HBRSblue!5,colframe=HBRSblue!50!black,title=Game Mechanic: Mid-Pore Transition]
-The intracellular background rectangle is drawn to \texttt{MEMBRANE\_Y + (THICKNESS / 2)}. 
-
-\textbf{Scientific Reality:} This represents the \textbf{Aqueous Pore}. The internal fluid of the cell partially penetrates the channel protein, allowing ions to enter the ``exit vestibule'' before fully leaving the membrane.
 \end{tcolorbox}
 
 
