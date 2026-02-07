@@ -16,6 +16,7 @@
 \definecolor{HBRSblue}{RGB}{0, 158, 224}
 \definecolor{MembraneOrange}{RGB}{255, 165, 0}
 \definecolor{PoreGray}{RGB}{240, 240, 240}
+\definecolor{LeafletGap}{RGB}{60, 60, 60}
 
 \usepackage[pdftex, outline]{contour}
 \newcommand{\whitefont}[1]{\contour{black}{\textcolor{white}{#1}}}
@@ -36,7 +37,7 @@ This game simulates the dynamics of ion transport across a biological cell membr
     
     \item[Extracellular Region:] Represents the aqueous, water-rich environment surrounding the cell. Rendered in {\color{HBRSblue}light blue}.
     
-    \item[Cell Membrane:] Represents the hydrophobic (i.e., water repelling) phospholipid bilayer that creates the cellular wall, separating the intra- and extracellular regions. Rendered in {\color{MembraneOrange}orange}.
+    \item[Cell Membrane:] Represents the hydrophobic (i.e., water repelling) phospholipid bilayer  -- two ``leaflets'' separated by a gap -- that creates the cellular wall, separating the intra- and extracellular regions. Each leaflet is rendered in {\color{MembraneOrange}orange}, while the leaflet gap between the bilayers in {\color{LeafletGap}darkgrey}.
     
     \item[Protein Pores:] Represent the tapered protein that spans the cellular wall, allowing ions to flow across. Rendered in \whitefont{white}.
 \end{description}
@@ -232,6 +233,10 @@ When an ion $\vec{v}$ collides with a boundary, the new velocity $\vec{v}'$ is d
     \item \textbf{Ion nature dependency:} Provide a specific "Score Multiplier" logic in the Python code so that successfully transporting a slow, bulky chloride ion gives the player more points than a fast sodium ion? Maybe also think about the role of the formal charge, or the effects of hydration (e.g., sodium ion has a tight solvation shell, making its effect size and speed slower).
     \item \textbf{Electrochemical Gradients:} Program pores with a static charge to attract or repel specific ion types.
     \item \textbf{Active Transport:} Add a ``Pump'' mechanic requiring energy (ATP) to move ions against the pressure gradient.
+    \item \textbf{Selective Permeability:} In real cells, pores aren't just open holes; they are often ion-selective.\\
+    The Idea: Change the Pore class so that certain pores only allow specific colors/types (e.g., a "Potassium Channel"). Add a self.allowed\_type = "potassium" to the Pore class and check if ion.type == p.allowed\_type during collision.
+	\item \textbf{Action Potentials:} Since you have Sodium (Na+) and Potassium (K+), you could add a "Voltage Meter." If the ratio of ions reaches a certain threshold, trigger an "Action Potential" animation where the screen flashes and the pores stay wide open for 2 seconds.
+	\item \textbf{Ions being "used":} As the intracellular\_count grows, the number of Ion objects increases. If the game slows down, consider removing ions that have been "inside" for more than 10 seconds to simulate them being used by the cell.
 \end{itemize}
 
 \begin{thebibliography}{11}

@@ -11,6 +11,8 @@ async def game():
     FPS = 60
     MEMBRANE_Y = 250
     MEMBRANE_THICKNESS = 30
+    LEAFLET_GAP = 5
+    LEAFLET_THICKNESS = (MEMBRANE_THICKNESS - LEAFLET_GAP) // 2
 
     # Colors
     HBRSblue = (0, 158, 224)
@@ -20,6 +22,7 @@ async def game():
     EXTRACELLULAR_BG = HBRSblue
     MEMBRANE_COLOR = ORANGE
     PORE_COLOR = HBRSlightgray
+    LEAFLET_GAP_COLOR = (100, 100, 100)
 
     radius_ratio = 7
     ION_TYPES = {
@@ -171,15 +174,28 @@ async def game():
             # --- MEMBRANE & PORES ---
             for p in pores:
                 p.update()
+
             current_x = 0
             sorted_pores = sorted(pores, key=lambda p: p.x)
+
             for p in sorted_pores:
                 gap_left = p.x - p.current_gap / 2
                 if gap_left > current_x:
-                    pygame.draw.rect(screen, MEMBRANE_COLOR, (current_x, MEMBRANE_Y, gap_left - current_x, MEMBRANE_THICKNESS))
+                    width = gap_left - current_x
+                    # Gap between leaflets
+                    pygame.draw.rect(screen, LEAFLET_GAP_COLOR, (current_x, MEMBRANE_Y, width, MEMBRANE_THICKNESS))
+                    # Top leaflet
+                    pygame.draw.rect(screen, MEMBRANE_COLOR, (current_x, MEMBRANE_Y, width, LEAFLET_THICKNESS))
+                    # Bottom leaflet
+                    pygame.draw.rect(screen, MEMBRANE_COLOR, (current_x, MEMBRANE_Y + LEAFLET_THICKNESS + LEAFLET_GAP, width, LEAFLET_THICKNESS))
+                
                 current_x = p.x + p.current_gap / 2
+
             if current_x < WIDTH:
-                pygame.draw.rect(screen, MEMBRANE_COLOR, (current_x, MEMBRANE_Y, WIDTH - current_x, MEMBRANE_THICKNESS))
+                width = WIDTH - current_x
+                pygame.draw.rect(screen, LEAFLET_GAP_COLOR, (current_x, MEMBRANE_Y, width, MEMBRANE_THICKNESS)) # gap between leaflets
+                pygame.draw.rect(screen, MEMBRANE_COLOR, (current_x, MEMBRANE_Y, width, LEAFLET_THICKNESS))
+                pygame.draw.rect(screen, MEMBRANE_COLOR, (current_x, MEMBRANE_Y + LEAFLET_THICKNESS + LEAFLET_GAP, width, LEAFLET_THICKNESS))
 
             # --- PROTEIN WEDGES ---
             lip_y_top, lip_y_bottom = MEMBRANE_Y, MEMBRANE_Y + MEMBRANE_THICKNESS
@@ -230,8 +246,8 @@ async def game():
                         # FIX: Only increment missed_shots if the ion is still moving UP
                         if not can_pass and ion.vy < 0:
                             missed_shots += 1
-                            ion.vy = abs(ion.vy)  # Change direction to move DOWN
-                            ion.vx = random.uniform(-2, 2)
+                            ion.vy = abs(ion.vy) * 0.8  # Lose a little energy on impact
+                            ion.vx += random.uniform(-3, 3) # Scatter effect
                             # Nudge it slightly below the membrane so it doesn't re-trigger immediately
                             ion.rect.top = MEMBRANE_Y + MEMBRANE_THICKNESS + 1
                     elif ion.rect.bottom < MEMBRANE_Y:
