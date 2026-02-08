@@ -309,23 +309,49 @@ async def game():
                     ion.vx = max(-max_v, min(max_v, ion.vx))
                     ion.vy = max(-max_v, min(max_v, ion.vy))
 
-                    # 5. Efflux / Leaking check
-                    if MEMBRANE_Y <= ion.rect.bottom <= MEMBRANE_Y + (MEMBRANE_THICKNESS / 2):
-                        leaked = False
-                        for p in pores:
-                            if (p.x - p.current_gap / 2) < ion.rect.centerx < (p.x + p.current_gap / 2):
-                                if p.current_gap > ion.size:
-                                    leaked = True
+                    # 5. Intracellular Interaction (Inside the Cell)
+                    if ion.rect.bottom >= (MEMBRANE_Y - 20): # Check slightly above membrane
+                        in_pore_zone = False
+                        current_p = None
                         
-                        if leaked:
-                            ion.has_passed = False
-                            leaked_out += 1
-                            intracellular_count -= 1
-                            ion.vy = 5 # Kick it back down to the extracellular space
+                        for p in pores:
+                            # Define the "mouth" of the protein pore
+                            p_top = MEMBRANE_Y - p.ext_len
+                            # We use a slightly wider check for the protein structure
+                            if (p.x - p.current_gap/2 - 15) < ion.rect.centerx < (p.x + p.current_gap/2 + 15):
+                                in_pore_zone = True
+                                current_p = p
+                                break
+
+                        if in_pore_zone:
+                            # 1. Check for Vertical Steric Hindrance (Too fat to enter)
+                            if ion.size > current_p.current_gap:
+                                if ion.rect.bottom >= MEMBRANE_Y:
+                                    ion.vy = -abs(ion.vy) * 0.8
+                                    ion.rect.bottom = MEMBRANE_Y - 1
+                            
+                            # 2. Check for Protein "Wall" Collisions (The White Wedges)
+                            # Left wall of the pore
+                            if ion.rect.centerx < (current_p.x - current_p.current_gap / 2):
+                                ion.vx = -abs(ion.vx) # Bounce Left
+                                ion.rect.right = int(current_p.x - current_p.current_gap / 2)
+                            
+                            # Right wall of the pore
+                            elif ion.rect.centerx > (current_p.x + current_p.current_gap / 2):
+                                ion.vx = abs(ion.vx) # Bounce Right
+                                ion.rect.left = int(current_p.x + current_p.current_gap / 2)
+                                
+                            # 3. Successful Leakage (Only if it clears the bottom)
+                            if ion.rect.top > MEMBRANE_Y + MEMBRANE_THICKNESS:
+                                ion.has_passed = False
+                                leaked_out += 1
+                                intracellular_count -= 1
+                                ion.vy = 5 
                         else:
-                            # Bounce off the "inside" of the membrane
-                            ion.vy = -abs(ion.vy) 
-                            ion.rect.bottom = MEMBRANE_Y - 1
+                            # Hit the Lipid Bilayer (The Orange Part)
+                            if ion.rect.bottom >= MEMBRANE_Y:
+                                ion.vy = -abs(ion.vy)
+                                ion.rect.bottom = MEMBRANE_Y - 1
 
                 # Clean up ions that fall off screen
                 if ion.rect.top > HEIGHT:
