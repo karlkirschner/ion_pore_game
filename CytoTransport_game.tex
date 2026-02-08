@@ -106,9 +106,17 @@ Cells need nutrients and to communicate with each other, which means that molecu
 
 \end{tcolorbox}
 
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50!black,title=Game Mechanic: Differing Protein]
+	\textbf{Scientific Basis:} Channels can be formed by very different proteins. Consequently, they can extend in different amounts into to the extra- and intracellular regions.\\
+	
+	\textbf{Code:}
+	To generate different channel proteins, three different pores are initialized, using two attributes: \texttt{ext\_len} (how far it sticks out the top) and \texttt{int\_len} (how far it sticks out the bottom).
+
+\end{tcolorbox}
+
 \begin{tcolorbox}[colback=gray!10, colframe=gray!50!black,title=Game Mechanic: Pore Opening and Closing]
 
-	\textbf{Scientific Basis:} The protein channel's pore can increases and decrease due to structural changes in the protein's subunits (i.e., \textbf{gating}). To approximate this behavior, the proteins are translated horizontally.\\
+	\textbf{Scientific Basis:} The protein channel's pore can increases and decrease due to structural changes in the protein's subunits (i.e., \textbf{gating}). To approximate this behavior, the proteins are translated horizontally. Since different channel proteins have differing biological response, their opening-and-closing velocity are each different.\\
 
 	\textbf{Code:}
 	The protein channel's pore width is systematically changed using a sine wave:

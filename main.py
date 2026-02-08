@@ -60,13 +60,17 @@ async def game():
             self.rect.y += self.vy
 
     class Pore:
-        def __init__(self, x, speed):
+        def __init__(self, x, speed, ext_len=5, int_len=5):
             self.x = x
             self.timer = random.uniform(0, 5)
             self.speed = speed
             self.base_gap = 45
             self.amplitude = 35
             self.current_gap = 45
+
+            # Control for differeing protein pore shapes.
+            self.ext_len = ext_len 
+            self.int_len = int_len
 
         def update(self):
             self.timer += self.speed
@@ -89,7 +93,11 @@ async def game():
     clock = pygame.time.Clock()
 
     player = Player()
-    pores = [Pore(200, 0.04), Pore(400, 0.07), Pore(600, 0.03)]
+
+    pores = [Pore(200, 0.12, ext_len=5, int_len=5), 
+             Pore(400, 0.08, ext_len=20, int_len=5), 
+             Pore(600, 0.05, ext_len=10, int_len=20)]
+
     ions = []
     intracellular_count, missed_shots, leaked_out, total_fired = 0, 0, 0, 0
     game_state = "MENU"
@@ -200,60 +208,83 @@ async def game():
             # --- PROTEIN WEDGES ---
             lip_y_top, lip_y_bottom = MEMBRANE_Y, MEMBRANE_Y + MEMBRANE_THICKNESS
             taper_amount = 6
-            # This is how far the protein "back" extends into the orange lipid
-            protein_length = 35
             protein_width = 15
             for p in pores:
                 gl, gr = p.x - p.current_gap / 2, p.x + p.current_gap / 2
-                pygame.draw.rect(screen, intracellular_bg, (gl, MEMBRANE_Y, p.current_gap, 15))
-                pygame.draw.rect(screen, EXTRACELLULAR_BG, (gl, MEMBRANE_Y, p.current_gap, 15))
-                l_wedge = [
-                    (gl, lip_y_bottom),
-                    (gl - protein_width, lip_y_bottom),
-                    (gl - protein_width, lip_y_top),
-                    (gl + taper_amount, lip_y_top),
-                ]
-                r_wedge = [
-                    (gr, lip_y_bottom),
-                    (gr + protein_width, lip_y_bottom),
-                    (gr + protein_width, lip_y_top),
-                    (gr - taper_amount, lip_y_top),
-                ]
+                
+                # Calculate the Y boundaries for THIS specific protein
+                # Top edge (extends into extracellular space)
+                p_top = MEMBRANE_Y - p.ext_len
+                # Bottom edge (extends into intracellular space)
+                p_bottom = MEMBRANE_Y + MEMBRANE_THICKNESS + p.int_len
+                
+                # Left Wedge
+                l_wedge = [(gl, p_bottom),                   # Bottom-inner
+                           (gl - protein_width, p_bottom),   # Bottom-outer
+                           (gl - protein_width, p_top),      # Top-outer
+                           (gl + taper_amount, p_top)]       # Top-inner (tapered)
+                
+                # Right Wedge
+                r_wedge = [(gr, p_bottom),
+                           (gr + protein_width, p_bottom),
+                           (gr + protein_width, p_top),
+                           (gr - taper_amount, p_top)]
 
                 pygame.draw.polygon(screen, PORE_COLOR, l_wedge)
                 pygame.draw.polygon(screen, PORE_COLOR, r_wedge)
 
-            # --- PHYSICS ---
+            # --- PHYSICS & COLLISION ---
             pressure_multiplier = 1.0 + (intracellular_count / 25.0)
 
             for ion in ions[:]:
                 ion.update()
+                
+                # Draw the ion body and glow (keep your existing draw code here)
                 pygame.draw.circle(screen, ion.color, ion.rect.center, ion.size // 2)
+                glow_color = [min(255, int(c + (255 - c) * 0.5)) for c in ion.color]
+                glow_radius = max(1, ion.size // 5)
+                glow_pos = (ion.rect.centerx - ion.size // 6, ion.rect.centery - ion.size // 6)
+                pygame.draw.circle(screen, tuple(glow_color), glow_pos, glow_radius)
 
                 if not ion.has_passed:
-                    # Collision check at membrane level
-                    if MEMBRANE_Y <= ion.rect.top <= MEMBRANE_Y + MEMBRANE_THICKNESS:
-                        can_pass = False
-                        for p in pores:
-                            # Steric Hindrance check
-                            taper_buffer = 6
-                            effective_gap_left = (p.x - p.current_gap / 2) + taper_buffer
-                            effective_gap_right = (p.x + p.current_gap / 2) - taper_buffer
+                    collision_occurred = False
+                    in_pore_zone = False
+                    
+                    # 1. Check if the ion is within the horizontal bounds of ANY pore first
+                    for p in pores:
+                        taper_buffer = 6
+                        gl = p.x - p.current_gap / 2 + taper_buffer
+                        gr = p.x + p.current_gap / 2 - taper_buffer
+                        
+                        if gl < ion.rect.centerx < gr:
+                            in_pore_zone = True
+                            # 2. Check if it's vertically inside THIS specific protein
+                            p_top = MEMBRANE_Y - p.ext_len
+                            if ion.rect.top <= MEMBRANE_Y + MEMBRANE_THICKNESS and ion.rect.bottom >= p_top:
+                                # Steric Hindrance (Size check)
+                                if ion.size > p.current_gap:
+                                    collision_occurred = True
+                            break 
 
-                            if ion.rect.left > effective_gap_left and ion.rect.right < effective_gap_right:
-                                can_pass = True
+                    # 3. If NOT in a pore zone, check if it hit the membrane wall
+                    if not in_pore_zone:
+                        if ion.rect.top <= MEMBRANE_Y + MEMBRANE_THICKNESS and ion.rect.bottom >= MEMBRANE_Y:
+                            collision_occurred = True
 
-                        # FIX: Only increment missed_shots if the ion is still moving UP
-                        if not can_pass and ion.vy < 0:
-                            missed_shots += 1
-                            ion.vy = abs(ion.vy) * 0.8  # Lose a little energy on impact
-                            ion.vx += random.uniform(-3, 3) # Scatter effect
-                            # Nudge it slightly below the membrane so it doesn't re-trigger immediately
-                            ion.rect.top = MEMBRANE_Y + MEMBRANE_THICKNESS + 1
-                    elif ion.rect.bottom < MEMBRANE_Y:
-                        ion.has_passed, intracellular_count = True, intracellular_count + 1
+                    # 4. Handle successful passing
+                    if not collision_occurred and ion.rect.bottom < MEMBRANE_Y - 5: # Small offset to ensure it's clear
+                        ion.has_passed = True
+                        intracellular_count += 1
+                    
+                    # 5. Handle the Bounce
+                    if collision_occurred and ion.vy < 0:
+                        missed_shots += 1
+                        ion.vy = abs(ion.vy) * 0.8 
+                        ion.vx += random.uniform(-3, 3)
+                        # Nudge safely below the membrane
+                        ion.rect.top = MEMBRANE_Y + MEMBRANE_THICKNESS + 5
+
                 else:
-                    # --- INTRACELLULAR BOUNCING ---
                     if ion.rect.left <= 0:
                         ion.rect.left = 1
                         ion.vx = abs(ion.base_speed) * pressure_multiplier
@@ -266,25 +297,37 @@ async def game():
                     if ion.rect.top <= 0:
                         ion.rect.top = 1
                         ion.vy = abs(ion.base_speed) * pressure_multiplier
-                        ion.vx += random.uniform(-3.5, 3.5)
+                        ion.vx += random.uniform(-4.5, 4.5)
 
-                    # Clamp velocity
-                    max_v = 14
+                    # 3. Apply the Pressure Multiplier to the current velocity
+                    # This makes them zip around faster as the concentration increases
+                    ion.vx *= (1.0 + (intracellular_count * 0.001)) 
+                    ion.vy *= (1.0 + (intracellular_count * 0.001))
+
+                    # 4. Speed Limit (Clamping)
+                    max_v = 5
                     ion.vx = max(-max_v, min(max_v, ion.vx))
                     ion.vy = max(-max_v, min(max_v, ion.vy))
 
+                    # 5. Efflux / Leaking check
                     if MEMBRANE_Y <= ion.rect.bottom <= MEMBRANE_Y + (MEMBRANE_THICKNESS / 2):
                         leaked = False
                         for p in pores:
                             if (p.x - p.current_gap / 2) < ion.rect.centerx < (p.x + p.current_gap / 2):
                                 if p.current_gap > ion.size:
                                     leaked = True
+                        
                         if leaked:
-                            ion.has_passed, leaked_out = False, leaked_out + 1
-                            intracellular_count, ion.vy = intracellular_count - 1, 5
+                            ion.has_passed = False
+                            leaked_out += 1
+                            intracellular_count -= 1
+                            ion.vy = 5 # Kick it back down to the extracellular space
                         else:
-                            ion.vy, ion.rect.bottom = -abs(ion.vy), MEMBRANE_Y - 1
+                            # Bounce off the "inside" of the membrane
+                            ion.vy = -abs(ion.vy) 
+                            ion.rect.bottom = MEMBRANE_Y - 1
 
+                # Clean up ions that fall off screen
                 if ion.rect.top > HEIGHT:
                     ions.remove(ion)
 
