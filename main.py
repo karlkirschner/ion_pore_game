@@ -8,7 +8,17 @@ pygame.init()
 
 async def game():
     # --- Configuration ---
-    WIDTH, HEIGHT = 800, 600
+    ## Game Window
+    WIDTH, HEIGHT = 800, 600 ## Original appoach
+
+    ## New approach to dynamically size the window based on the user's screen resolution.
+    # info = pygame.display.Info()
+    # screen_width = info.current_w
+    # screen_height = info.current_h
+    # # Set the window to be a safe 80% of their screen size
+    # WIDTH = int(screen_width * 0.8)
+    # HEIGHT = int(screen_height * 0.8)
+
     PLAYER_SPEED = 7
     FPS = 60
     MEMBRANE_Y = 250
