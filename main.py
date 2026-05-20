@@ -4,6 +4,8 @@ import math
 import random
 
 
+pygame.init()
+
 async def game():
     # --- Configuration ---
     WIDTH, HEIGHT = 800, 600
@@ -121,6 +123,15 @@ async def game():
                 if game_state == "MENU" and event.key == pygame.K_RETURN:
                     game_state = "PLAY"
                 elif game_state == "PLAY":
+                    if event.key == pygame.K_ESCAPE:
+                        ions.clear()
+                        
+                        intracellular_count = 0
+                        missed_shots = 0
+                        leaked_out = 0
+                        total_fired = 0
+
+                        game_state = "MENU" # 
                     if event.key == pygame.K_SPACE:
                         ions.append(Ion(player.rect.centerx, player.rect.top, player.current_ion))
                         total_fired += 1
@@ -139,11 +150,12 @@ async def game():
             draw_text(screen, "Ions Passing Through a Cell Membrane", 25, WIDTH // 2, HEIGHT // 2 - 125, HBRSblue)
             draw_text(screen, "by K.N. Kirschner, H-BRS", 15, WIDTH // 2, HEIGHT // 2 - 80, HBRSlightgray)
 
-            pygame.draw.rect(screen, (40, 40, 60), (WIDTH // 2 - 150, HEIGHT // 2 + 10, 300, 120), border_radius=10)
-            draw_text(screen, "CONTROLS", 24, WIDTH // 2, HEIGHT // 2 + 35, HBRSblue)
-            draw_text(screen, "ARROWS: Move Launcher", 18, WIDTH // 2, HEIGHT // 2 + 65)
-            draw_text(screen, "SPACE: Launch Ion", 18, WIDTH // 2, HEIGHT // 2 + 90)
-            draw_text(screen, "1, 2, 3 & 4: Ion Types", 18, WIDTH // 2, HEIGHT // 2 + 115)
+            pygame.draw.rect(screen, (40, 40, 60), (WIDTH // 2 - 150, HEIGHT // 2 + 5, 300, 140), border_radius=10) # Made slightly taller
+            draw_text(screen, "CONTROLS", 24, WIDTH // 2, HEIGHT // 2 + 25, HBRSblue)
+            draw_text(screen, "ARROWS: Move Launcher", 18, WIDTH // 2, HEIGHT // 2 + 55)
+            draw_text(screen, "SPACE: Launch Ion", 18, WIDTH // 2, HEIGHT // 2 + 80)
+            draw_text(screen, "1, 2, 3 & 4: Ion Types", 18, WIDTH // 2, HEIGHT // 2 + 105)
+            draw_text(screen, "ESC: Return to Menu", 18, WIDTH // 2, HEIGHT // 2 + 130)
 
             pulse = (math.sin(pygame.time.get_ticks() * 0.005) + 1) / 2
             start_color = (0, 158, int(224 * pulse))
